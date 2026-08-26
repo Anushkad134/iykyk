@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Personal productivity app with calendar and tabbed notes — Cruella Edition">
+  <title>Aesthetic Productivity</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1 class="logo">
+        <span class="logo-text">UofT loading...</span>
+      </h1>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <!-- Calendar nav item -->
+    <button class="sidebar-item sidebar-item--calendar active" id="nav-calendar" onclick="switchView('calendar')">
+      <span class="sidebar-icon">📅</span>
+      <span>Calendar</span>
+      <span class="reminder-badge" id="reminder-badge" style="display:none;">0</span>
+    </button>
+    
+    <!-- Motivation nav item -->
+    <button class="sidebar-item sidebar-item--motivation" id="nav-motivation" onclick="switchView('motivation')">
+      <span class="sidebar-icon">✨</span>
+      <span>Motivation</span>
+    </button>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section-title">
+      <span>NOTEBOOKS</span>
+    </div>
+
+    <!-- Tab list -->
+    <div class="sidebar-tabs" id="sidebar-tabs">
+      <!-- Rendered by JS -->
+    </div>
+
+    <!-- Add tab button -->
+    <button class="sidebar-add-btn" id="add-tab-btn" onclick="openTabModal()">
+      <span class="plus-icon">+</span>
+      <span>New Notebook</span>
+    </button>
+
+    <div class="sidebar-footer">
+      <div class="dalmatian-dots"></div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <main class="main-panel" id="main-panel">
+
+    <!-- CALENDAR VIEW -->
+    <section class="view view--calendar" id="calendar-view">
+      <div class="calendar-container">
+        <!-- Calendar header -->
+        <div class="calendar-header">
+          <button class="cal-nav-btn" onclick="navigateMonth(-1)">‹</button>
+          <h2 class="cal-month-title" id="cal-month-title">August 2026</h2>
+          <button class="cal-nav-btn" onclick="navigateMonth(1)">›</button>
+          <button class="cal-today-btn" onclick="goToToday()">Today</button>
+        </div>
+
+        <!-- Calendar grid -->
+        <div class="calendar-grid" id="calendar-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Upcoming events sidebar -->
+      <div class="upcoming-panel">
+        <h3 class="upcoming-title">Upcoming</h3>
+        <div class="upcoming-list" id="upcoming-list">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- NOTES VIEW -->
+    <section class="view view--notes hidden" id="notes-view">
+      <div class="notes-list-panel">
+        <div class="notes-list-header">
+          <h2 class="notes-list-title" id="notes-list-title">Notes</h2>
+          <button class="btn-new-note" onclick="createNewNote()">+ New</button>
+        </div>
+        <div class="notes-search">
+          <input type="text" class="search-input" id="notes-search-input" placeholder="Search notes..." oninput="handleNoteSearch(this.value)">
+        </div>
+        <div class="notes-list" id="notes-list">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <div class="notes-editor-panel" id="notes-editor-panel">
+        <div class="editor-empty" id="editor-empty">
+          <div class="editor-empty-icon">♠</div>
+          <p>Select a note or create a new one</p>
+        </div>
+        <div class="editor-active hidden" id="editor-active">
+          <input type="text" class="editor-title" id="editor-title" placeholder="Note title..." onblur="autosaveNote()">
+          <textarea class="editor-content" id="editor-content" placeholder="Start writing..." onblur="autosaveNote()"></textarea>
+          
+          <div class="editor-files">
+            <h4 class="files-title">Attachments</h4>
+            <div class="files-list" id="files-list">
+              <!-- Files rendered here by JS -->
+            </div>
+            <label class="btn-upload" for="file-upload">
+              Upload File (PDF, Image)
+            </label>
+            <input type="file" id="file-upload" class="hidden-input" accept=".pdf,image/png,image/jpeg,image/jpg" onchange="uploadFile(event)">
+          </div>
+
+          <div class="editor-footer">
+            <span class="editor-timestamp" id="editor-timestamp"></span>
+            <div class="editor-actions">
+              <button class="btn-save" onclick="autosaveNote()">Save</button>
+              <button class="btn-delete-note" onclick="deleteCurrentNote()">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MOTIVATION VIEW -->
+    <section class="view view--motivation hidden" id="motivation-view">
+      <div class="vision-container">
+        <div class="vision-header">
+          <h2 class="vision-title">Vision Board</h2>
+          <div class="vision-actions">
+            <button class="btn-new-note" onclick="openVisionQuoteModal()">+ Add Quote</button>
+            <label class="btn-new-note" for="vision-image-upload" style="cursor:pointer; display:inline-block;">
+              + Add Image
+            </label>
+            <input type="file" id="vision-image-upload" class="hidden-input" accept="image/png,image/jpeg,image/jpg" onchange="uploadVisionImage(event)">
+          </div>
+        </div>
+        <div class="vision-grid" id="vision-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ═══ EVENT MODAL ═══ -->
+  <div class="modal-overlay hidden" id="event-modal-overlay" onclick="closeEventModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title" id="event-modal-title">New Event</h3>
+        <button class="modal-close" onclick="closeEventModal()">×</button>
+      </div>
+      <form id="event-form" onsubmit="handleEventSubmit(event)">
+        <input type="hidden" id="event-id">
+        <div class="form-group">
+          <label for="event-title-input">Title</label>
+          <input type="text" id="event-title-input" required placeholder="Event name...">
+        </div>
+        <div class="form-group">
+          <label for="event-description">Description</label>
+          <textarea id="event-description" rows="3" placeholder="Details..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="event-start">Start Date</label>
+            <input type="date" id="event-start" required>
+          </div>
+          <div class="form-group">
+            <label for="event-end">End Date</label>
+            <input type="date" id="event-end">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="event-reminder">Reminder Date</label>
+            <input type="date" id="event-reminder">
+          </div>
+          <div class="form-group">
+            <label for="event-tab">Notebook</label>
+            <select id="event-tab">
+              <option value="">None (General)</option>
+              <!-- Populated by JS -->
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="event-status">Status</label>
+          <select id="event-status">
+            <option value="upcoming">Upcoming</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="event-delete-btn" onclick="deleteCurrentEvent()" style="display:none;">Delete</button>
+          <div class="modal-actions-right">
+            <button type="button" class="btn-secondary" onclick="closeEventModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══ TAB MODAL ═══ -->
+  <div class="modal-overlay hidden" id="tab-modal-overlay" onclick="closeTabModal()">
+    <div class="modal modal--small" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title" id="tab-modal-title">New Notebook</h3>
+        <button class="modal-close" onclick="closeTabModal()">×</button>
+      </div>
+      <form id="tab-form" onsubmit="handleTabSubmit(event)">
+        <input type="hidden" id="tab-edit-id">
+        <div class="form-group">
+          <label for="tab-name-input">Name</label>
+          <input type="text" id="tab-name-input" required placeholder="Notebook name...">
+        </div>
+        <div class="form-group">
+          <label for="tab-color-input">Color</label>
+          <div class="color-picker-row">
+            <input type="color" id="tab-color-input" value="#ffffff">
+            <span class="color-preview" id="tab-color-preview"></span>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="tab-delete-btn" onclick="deleteCurrentTab()" style="display:none;">Delete</button>
+          <div class="modal-actions-right">
+            <button type="button" class="btn-secondary" onclick="closeTabModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══ CONFIRM MODAL ═══ -->
+  <div class="modal-overlay hidden" id="confirm-modal-overlay">
+    <div class="modal modal--small" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirm</h3>
+      </div>
+      <p class="confirm-message" id="confirm-message">Are you sure?</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="confirmCancel()">Cancel</button>
+        <button class="btn-danger" onclick="confirmOk()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ VISION QUOTE MODAL ═══ -->
+  <div class="modal-overlay hidden" id="vision-modal-overlay" onclick="closeVisionQuoteModal()">
+    <div class="modal modal--small" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">New Quote</h3>
+        <button class="modal-close" onclick="closeVisionQuoteModal()">×</button>
+      </div>
+      <form id="vision-form" onsubmit="handleVisionQuoteSubmit(event)">
+        <div class="form-group">
+          <label for="vision-quote-input">Quote text</label>
+          <textarea id="vision-quote-input" required rows="3" placeholder="Type your motivation here..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeVisionQuoteModal()">Cancel</button>
+          <button type="submit" class="btn-primary">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══ FILE PREVIEW OVERLAY ═══ -->
+  <div class="preview-overlay hidden" id="preview-overlay">
+    <div class="preview-header">
+      <button class="btn-secondary" onclick="closePreview()">← Back</button>
+      <h3 class="preview-title" id="preview-title">Document Preview</h3>
+    </div>
+    <div class="preview-content" id="preview-content">
+      <!-- Embedded by JS -->
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "cruella-productivity",
+  "version": "1.0.0",
+  "description": "Personal productivity app — Cruella Edition",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "multer": "^2.2.0",
+    "sql.js": "^1.10.3"
+  }
+}
