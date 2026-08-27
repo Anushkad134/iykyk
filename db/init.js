@@ -5,7 +5,11 @@ const path = require('path');
 const DB_PATH = path.join(__dirname, 'data.db');
 
 async function initDB() {
-  const SQL = await initSqlJs();
+  const SQL = await initSqlJs({
+    locateFile: file =>
+      path.join(__dirname, '..', 'node_modules', 'sql.js', 'dist', file)
+  });
+
   let db;
 
   // Load existing database or create new
@@ -81,10 +85,10 @@ async function initDB() {
 
   if (tabCount === 0) {
     const defaultTabs = [
-      { name: 'Work',      color: '#ffffff', order: 0 },
-      { name: 'Research',  color: '#aaaaaa', order: 1 },
-      { name: 'Projects',  color: '#888888', order: 2 },
-      { name: 'Startup',   color: '#666666', order: 3 },
+      { name: 'Work', color: '#ffffff', order: 0 },
+      { name: 'Research', color: '#aaaaaa', order: 1 },
+      { name: 'Projects', color: '#888888', order: 2 },
+      { name: 'Startup', color: '#666666', order: 3 },
       { name: 'Resume/CV', color: '#cccccc', order: 4 },
     ];
 
