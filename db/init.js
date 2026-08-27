@@ -2,7 +2,11 @@ const initSqlJs = require('sql.js');
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, 'data.db');
+const SOURCE_DB_PATH = path.join(__dirname, 'data.db');
+
+const DB_PATH = process.env.VERCEL
+  ? '/tmp/data.db'
+  : SOURCE_DB_PATH;
 
 async function initDB() {
   const SQL = await initSqlJs({
@@ -12,9 +16,16 @@ async function initDB() {
 
   let db;
 
-  // Load existing database or create new
+  // On Vercel, use the temporary database if this function instance
+  // has already created one. Otherwise copy/load the original database.
   if (fs.existsSync(DB_PATH)) {
     const buffer = fs.readFileSync(DB_PATH);
+    db = new SQL.Database(buffer);
+  } else if (process.env.VERCEL && fs.existsSync(SOURCE_DB_PATH)) {
+    const buffer = fs.readFileSync(SOURCE_DB_PATH);
+    db = new SQL.Database(buffer);
+  } else if (fs.existsSync(SOURCE_DB_PATH)) {
+    const buffer = fs.readFileSync(SOURCE_DB_PATH);
     db = new SQL.Database(buffer);
   } else {
     db = new SQL.Database();
@@ -73,14 +84,17 @@ async function initDB() {
   db.run(`
     CREATE TABLE IF NOT EXISTS vision_items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      type TEXT NOT NULL, -- 'quote' or 'image'
+      type TEXT NOT NULL,
       content TEXT NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
   // Seed default tabs if the table is empty
-  const result = db.exec('SELECT COUNT(*) as count FROM tabs');
+  const result = db.exec(
+    'SELECT COUNT(*) as count FROM tabs'
+  );
+
   const tabCount = result[0]?.values[0][0] || 0;
 
   if (tabCount === 0) {
@@ -93,20 +107,27 @@ async function initDB() {
     ];
 
     for (const tab of defaultTabs) {
-      db.run('INSERT INTO tabs (name, color, sort_order) VALUES (?, ?, ?)', [tab.name, tab.color, tab.order]);
+      db.run(
+        'INSERT INTO tabs (name, color, sort_order) VALUES (?, ?, ?)',
+        [tab.name, tab.color, tab.order]
+      );
     }
+
     console.log('✓ Seeded default tabs');
   }
 
-  // Save to disk
+  // Save database
   saveDB(db);
+
   console.log('✓ Database initialized');
+
   return db;
 }
 
 function saveDB(db) {
   const data = db.export();
   const buffer = Buffer.from(data);
+
   fs.writeFileSync(DB_PATH, buffer);
 }
 
@@ -114,17 +135,22 @@ function saveDB(db) {
 function queryAll(db, sql, params = []) {
   const stmt = db.prepare(sql);
   stmt.bind(params);
+
   const rows = [];
+
   while (stmt.step()) {
     rows.push(stmt.getAsObject());
   }
+
   stmt.free();
+
   return rows;
 }
 
 // Helper: run a SELECT query and return one object
 function queryOne(db, sql, params = []) {
   const rows = queryAll(db, sql, params);
+
   return rows[0] || null;
 }
 
@@ -136,8 +162,18 @@ function execute(db, sql, params = []) {
 
 // Helper: get last insert rowid
 function lastInsertId(db) {
-  const result = db.exec('SELECT last_insert_rowid() as id');
+  const result = db.exec(
+    'SELECT last_insert_rowid() as id'
+  );
+
   return result[0]?.values[0][0];
 }
 
-module.exports = { initDB, saveDB, queryAll, queryOne, execute, lastInsertId };
+module.exports = {
+  initDB,
+  saveDB,
+  queryAll,
+  queryOne,
+  execute,
+  lastInsertId
+};
